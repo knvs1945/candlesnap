@@ -18,6 +18,7 @@ app.set("view engine", "handlebars");
 // route to homepage
 app.get('/', (req, res) => {
     res.render("home", { 
+        navbar: "./layouts/navbar",
         stuff: otherstuff
     });
 })
