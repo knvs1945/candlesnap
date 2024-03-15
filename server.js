@@ -10,26 +10,27 @@ const app = express();
 
 //  page constants
 const otherstuff = "this is other stuff";
-var APIData;
 
 // user: kjos.c95g@gmail.com
 // API Key: pk_ea51b6b414234d8794331c55654b6c65
 // connect to iexapis API: ("https://cloud.iexapis.com/stable/stock/fb/quote?token=pk_ea51b6b414234d8794331c55654b6c65")
-request(
-    "https://cloud.iexapis.com/stable/stock/fb/quote?token=pk_ea51b6b414234d8794331c55654b6c65", 
-    { json: true },
-    (err, res, body) => {
-        if (err) {
-            return console.log(err); // error has occurred
-        }
-        if (res.statusCode === 200) { 
-            console.log(body);
-            APIData = body;
-        }
-    }
-);
 
-
+// call api here
+function callAPI( APIcallback ) {
+    request(
+        "https://cloud.iexapis.com/stable/stock/fb/quote?token=pk_ea51b6b414234d8794331c55654b6c65", 
+        { json: true },
+        (err, res, body) => {
+            if (err) {
+                return console.log(err); // error has occurred
+            }
+            if (res.statusCode === 200) { 
+                APIcallback(body);
+            }
+        }
+    );
+        
+}
 
 // set handlebars as middleware for creating dynamic content
 app.engine("handlebars", engine());
@@ -52,9 +53,11 @@ app.get('/about', (req, res) => {
 // load common pages here
 // home page
 function loadHomePage(req, res) {
-    res.render("home", { 
-        navbar: "./layouts/navbar",
-        stuff: APIData.symbol
+    callAPI( function(APIData) {   
+        res.render("home", { 
+            navbar: "./layouts/navbar",
+            stockdata: APIData
+        });
     });
 }
 
