@@ -3,22 +3,52 @@ const { engine } = require("express-handlebars"); // uses an constant object "{}
 const url = require("url");
 const path = require("path");
 const request = require("request");
+const parser = require("body-parser");
+
+/*
+ * Server Setup here
+ */
 
 // server requirements
 const port = process.env.PORT || 5000; // used for herokuapp
 const app = express();
 
+// body parser middleware
+app.use(parser.urlencoded({extended: false}));
+
+// set handlebars as middleware for creating dynamic content
+app.engine("handlebars", engine());
+app.set("view engine", "handlebars"); 
+
+// setup handlebars helpers for data display manipulation
+/*engine.registerHelper('toPercentage', function(value, multiplier) {
+    return value * multiplier;
+});*/
+
 //  page constants
 const otherstuff = "this is other stuff";
+
+/*
+ * API functions here
+ */
 
 // user: kjos.c95g@gmail.com
 // API Key: pk_ea51b6b414234d8794331c55654b6c65
 // connect to iexapis API: ("https://cloud.iexapis.com/stable/stock/fb/quote?token=pk_ea51b6b414234d8794331c55654b6c65")
 
-// call api here
-function callAPI( APIcallback ) {
+// CALL API here here
+function callAPI( APIcallback, stockname = "" ) {
+
+    let popularStocks = [ "fb", "aapl", "goog", "amzn", "tsla" ];
+    let popularStockIndex = Math.floor( Math.random() * popularStocks.length);
+
+    let APItoken = "pk_ea51b6b414234d8794331c55654b6c65";
+    let stock = popularStocks[popularStockIndex] ; // default to FB
+    
+    if (stockname !== "") stock = stockname;
+    
     request(
-        "https://cloud.iexapis.com/stable/stock/fb/quote?token=pk_ea51b6b414234d8794331c55654b6c65", 
+        "https://cloud.iexapis.com/stable/stock/" + stock + "/quote?token=" + APItoken, 
         { json: true },
         (err, res, body) => {
             if (err) {
@@ -27,20 +57,24 @@ function callAPI( APIcallback ) {
             if (res.statusCode === 200) { 
                 APIcallback(body);
             }
+            else {
+                APIcallback({ error: "Stock: " + stock + " not found "});
+            }
         }
     );
-        
 }
 
-// set handlebars as middleware for creating dynamic content
-app.engine("handlebars", engine());
-app.set("view engine", "handlebars"); 
+
+/*
+ * Routing here
+ */
 
 // set up handlebar routes
-// route to homepage
+// routes to homepage
 app.get('/', loadHomePage );
 app.get('/home', loadHomePage );
 app.get('/index', loadHomePage );
+app.post('/', loadHomePage );
 
 // routes to about page
 app.get('/about', (req, res) => {
@@ -50,15 +84,20 @@ app.get('/about', (req, res) => {
     });
 })
 
-// load common pages here
-// home page
+/*
+ * Common page functions here
+ */
+
+// home page for get and post requests
 function loadHomePage(req, res) {
-    callAPI( function(APIData) {   
+    callAPI( (APIData) => {   
         res.render("home", { 
             navbar: "./layouts/navbar",
             stockdata: APIData
-        });
-    });
+            });
+        },
+        req.body.stock_ticker // body comes from body-parser module
+    );
 }
 
 // about page
