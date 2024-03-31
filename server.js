@@ -35,6 +35,7 @@ const otherstuff = "this is other stuff";
 // user: kjos.c95g@gmail.com
 // API Key: pk_ea51b6b414234d8794331c55654b6c65
 // connect to iexapis API: ("https://cloud.iexapis.com/stable/stock/fb/quote?token=pk_ea51b6b414234d8794331c55654b6c65")
+// https://api.iex.cloud/v1/tops/last?token=pk_ea51b6b414234d8794331c55654b6c65
 
 // CALL API here here
 function callAPI( APIcallback, stockname = "" ) {
@@ -44,17 +45,25 @@ function callAPI( APIcallback, stockname = "" ) {
 
     let APItoken = "pk_ea51b6b414234d8794331c55654b6c65";
     let stock = popularStocks[popularStockIndex] ; // default to FB
-    
+
     if (stockname !== "") stock = stockname;
     
+    // let API_url = "https://cloud.iexapis.com/stable/stock/";
+    let API_url = "https://api.iex.cloud/v1/tops/";
+
+    // let API_params = + stock + "/quote?token=" + APItoken;
+    let API_params = "last?symbols=" + stock +"&token=" + APItoken;
+    
+    
     request(
-        "https://cloud.iexapis.com/stable/stock/" + stock + "/quote?token=" + APItoken, 
+        API_url + API_params,
         { json: true },
         (err, res, body) => {
             if (err) {
                 return console.log(err); // error has occurred
             }
             if (res.statusCode === 200) { 
+                console.log(API_url + API_params);
                 APIcallback(body);
             }
             else {
@@ -91,9 +100,11 @@ app.get('/about', (req, res) => {
 // home page for get and post requests
 function loadHomePage(req, res) {
     callAPI( (APIData) => {   
+        
+        console.log(APIData);
         res.render("home", { 
             navbar: "./layouts/navbar",
-            stockdata: APIData
+            stockdata: APIData[0]
             });
         },
         req.body.stock_ticker // body comes from body-parser module
